@@ -93,69 +93,70 @@ export const PremiumUpgradeModal: React.FC<PremiumUpgradeModalProps> = ({ isOpen
 
                 {/* Content */}
                 <div className="p-6">
-                    {/* Header */}
-                    <div className="flex flex-col items-center text-center gap-3 mb-1">
-                        <div className="w-10 h-10 rounded-[10px] bg-white/[0.03] border border-white/[0.05] flex items-center justify-center shadow-inner relative group transition-transform duration-500 hover:scale-105">
-                            <Lock size={16} className="text-white/70" strokeWidth={2} />
-                        </div>
-                        <div>
-                            <h2 className="text-[15px] font-medium text-white/90 tracking-tight">Unlock Pro</h2>
-                            <p className="text-[12px] text-white/40 mt-1 max-w-[260px] mx-auto leading-relaxed">Profile Engine & Job Description Intelligence</p>
-                        </div>
-                    </div>
-
-                    {/* Feature list */}
-                    <div className="mt-5 space-y-2 bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
-                        {[
-                            'Professional Identity Graph',
-                            'JD analysis & persona tuning',
-                            'Company research & salaries',
-                            'Mock interviews & gap analysis'
-                        ].map((feature, i) => (
-                            <div key={i} className="flex items-center gap-2.5">
-                                <div className="w-[14px] h-[14px] rounded-[4px] bg-white/[0.05] border border-white/[0.05] flex items-center justify-center shrink-0">
-                                    <Check size={8} className="text-white/60" strokeWidth={3} />
-                                </div>
-                                <span className="text-[12px] text-white/60">{feature}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Buy button */}
-                    <button
-                        onClick={() => window.electronAPI?.openExternal?.('https://evynignatious.gumroad.com/l/natively')}
-                        className="mt-5 w-full py-2.5 rounded-[10px] bg-[#FACC15] text-black text-[12px] font-semibold hover:bg-[#FDE047] active:scale-[0.98] transition-all duration-200 flex items-center justify-center shadow-[0_0_15px_rgba(250,204,21,0.15)] hover:shadow-[0_0_20px_rgba(250,204,21,0.25)]"
-                    >
-                        Purchase License
-                    </button>
-
-                    {/* Separator */}
-                    <div className="flex items-center gap-3 my-4">
-                        <div className="flex-1 h-px bg-white/[0.04]" />
-                        <span className="text-[9px] text-white/30 uppercase tracking-widest font-medium">Already purchased?</span>
-                        <div className="flex-1 h-px bg-white/[0.04]" />
-                    </div>
-
                     {isPremium ? (
-                        <div className="space-y-4">
-                            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                                <CheckCircle size={24} className="text-green-400 mb-2" />
-                                <h3 className="text-[13px] font-bold text-green-400">Pro License Active</h3>
-                                <p className="text-[11px] text-green-400/70 mt-1">This device is authorized for all premium features.</p>
+                        <div className="flex flex-col items-center text-center py-6">
+                            <div className="w-16 h-16 rounded-[16px] bg-green-500/10 border border-green-500/20 flex flex-col items-center justify-center mb-6 shadow-inner relative group transition-transform duration-500 hover:scale-105">
+                                <CheckCircle size={28} className="text-green-400" strokeWidth={2} />
                             </div>
+                            <h2 className="text-[18px] font-semibold text-white/90 tracking-tight">Pro License Active</h2>
+                            <p className="text-[13px] text-white/50 mt-2 max-w-[280px] mx-auto leading-relaxed mb-8">
+                                Your device is fully authorized for Natively's premium features including the Profile Engine, Job Description Intelligence, and Company Research.
+                            </p>
 
                             <button
                                 onClick={handleDeactivate}
-                                className="w-full py-2.5 rounded-[10px] bg-red-500/10 text-red-400 border border-red-500/20 text-[12px] font-medium hover:bg-red-500/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                                className="w-full py-3 rounded-[10px] bg-red-500/10 text-red-400 border border-red-500/20 text-[13px] font-medium hover:bg-red-500/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 shadow-inner"
                             >
-                                <X size={14} /> Deactivate License
+                                <X size={15} /> Deactivate License
                             </button>
-                            <p className="text-[10px] text-white/30 text-center px-4 leading-relaxed">
+                            <p className="text-[10px] text-white/30 text-center px-4 mt-4 leading-relaxed">
                                 Deactivating will remove the license from this device, allowing you to use it on another computer.
                             </p>
                         </div>
                     ) : (
                         <>
+                            {/* Header */}
+                            <div className="flex flex-col items-center text-center gap-3 mb-1">
+                                <div className="w-10 h-10 rounded-[10px] bg-white/[0.03] border border-white/[0.05] flex items-center justify-center shadow-inner relative group transition-transform duration-500 hover:scale-105">
+                                    <Lock size={16} className="text-white/70" strokeWidth={2} />
+                                </div>
+                                <div>
+                                    <h2 className="text-[15px] font-medium text-white/90 tracking-tight">Unlock Pro</h2>
+                                    <p className="text-[12px] text-white/40 mt-1 max-w-[260px] mx-auto leading-relaxed">Profile Engine & Job Description Intelligence</p>
+                                </div>
+                            </div>
+
+                            {/* Feature list */}
+                            <div className="mt-5 space-y-2 bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
+                                {[
+                                    'Professional Identity Graph',
+                                    'JD analysis & persona tuning',
+                                    'Company research & salaries',
+                                    'Mock interviews & gap analysis'
+                                ].map((feature, i) => (
+                                    <div key={i} className="flex items-center gap-2.5">
+                                        <div className="w-[14px] h-[14px] rounded-[4px] bg-white/[0.05] border border-white/[0.05] flex items-center justify-center shrink-0">
+                                            <Check size={8} className="text-white/60" strokeWidth={3} />
+                                        </div>
+                                        <span className="text-[12px] text-white/60">{feature}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Buy button */}
+                            <button
+                                onClick={() => window.electronAPI?.openExternal?.('https://evynignatious.gumroad.com/l/natively')}
+                                className="mt-5 w-full py-2.5 rounded-[10px] bg-[#FACC15] text-black text-[12px] font-semibold hover:bg-[#FDE047] active:scale-[0.98] transition-all duration-200 flex items-center justify-center shadow-[0_0_15px_rgba(250,204,21,0.15)] hover:shadow-[0_0_20px_rgba(250,204,21,0.25)]"
+                            >
+                                Purchase License
+                            </button>
+
+                            {/* Separator */}
+                            <div className="flex items-center gap-3 my-4">
+                                <div className="flex-1 h-px bg-white/[0.04]" />
+                                <span className="text-[9px] text-white/30 uppercase tracking-widest font-medium">Already purchased?</span>
+                                <div className="flex-1 h-px bg-white/[0.04]" />
+                            </div>
                             {/* License key input for non-premium */}
                             <div className="space-y-2.5">
                                 <div className="relative">
