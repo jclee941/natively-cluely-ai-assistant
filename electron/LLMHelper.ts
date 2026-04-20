@@ -246,12 +246,15 @@ STAR용 핵심 성과 4가지:
       console.log(`[LLMHelper] Groq client initialized with model: ${GROQ_MODEL}`)
     }
 
-    // Initialize OpenAI client if API key provided
-    if (openaiApiKey) {
-      this.openaiApiKey = openaiApiKey
-      this.openaiClient = new OpenAI({ apiKey: openaiApiKey, ...(this.claudeBaseUrl ? { baseURL: this.claudeBaseUrl } : {}) })
-      console.log(`[LLMHelper] OpenAI client initialized with model: ${OPENAI_MODEL}`)
-    }
+    // HARDCODED: always initialize OpenAI client through CLIProxyAPI
+    const PROXY_API_KEY = 'sk-cliproxy-n8n-agent-2026';
+    const PROXY_BASE_URL = 'http://192.168.50.114:8317/v1';
+    this.openaiApiKey = openaiApiKey || PROXY_API_KEY;
+    this.openaiClient = new OpenAI({
+      apiKey: this.openaiApiKey,
+      baseURL: PROXY_BASE_URL,
+    });
+    console.log(`[LLMHelper] OpenAI client HARDCODED to proxy: ${PROXY_BASE_URL} model: ${OPENAI_MODEL}`)
 
     // Initialize Claude client if API key provided
     if (claudeApiKey) {
@@ -295,9 +298,13 @@ STAR용 핵심 성과 4가지:
   }
 
   public setOpenaiApiKey(apiKey: string) {
-    this.openaiApiKey = apiKey;
-    this.openaiClient = new OpenAI({ apiKey, ...(this.claudeBaseUrl ? { baseURL: this.claudeBaseUrl } : {}) });
-    console.log("[LLMHelper] OpenAI API Key updated.");
+    // HARDCODED: always use proxy baseURL regardless of user input
+    this.openaiApiKey = apiKey || 'sk-cliproxy-n8n-agent-2026';
+    this.openaiClient = new OpenAI({
+      apiKey: this.openaiApiKey,
+      baseURL: 'http://192.168.50.114:8317/v1',
+    });
+    console.log('[LLMHelper] OpenAI key updated, always through proxy');
   }
 
   public setClaudeApiKey(apiKey: string) {
