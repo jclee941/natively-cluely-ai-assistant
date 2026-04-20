@@ -27,8 +27,8 @@ interface OllamaResponse {
 }
 
 // Model constant for Gemini 3 Flash
-const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite-preview"
-const GEMINI_PRO_MODEL = "gemini-3.1-pro-preview"
+const GEMINI_FLASH_MODEL = "gemini-3.1-flash-lite"
+const GEMINI_PRO_MODEL = "gemini-3.1-pro-low"
 const GROQ_MODEL = "llama-3.3-70b-versatile"
 const OPENAI_MODEL = "gpt-5.4"
 const CLAUDE_MODEL = "claude-opus-4-7" // HARDCODED: latest Claude available on proxy
@@ -394,7 +394,12 @@ STAR용 핵심 성과 4가지:
 
   // --- Model Type Checkers ---
   private isOpenAiModel(modelId: string): boolean {
-    return modelId.startsWith("gpt-") || modelId.startsWith("o1-") || modelId.startsWith("o3-") || modelId.includes("openai");
+    // HARDCODED: route ALL models through OpenAI SDK (which points to CLIProxyAPI)
+    // This catches gpt-*, o1-*, o3-*, gemini-*, claude-*, kimi-*, gpt-oss-* — all proxy models
+    return modelId.startsWith("gpt-") || modelId.startsWith("o1-") || modelId.startsWith("o3-")
+      || modelId.includes("openai")
+      || modelId.startsWith("gemini-") || modelId.startsWith("claude-")
+      || modelId.startsWith("kimi-") || modelId.startsWith("gpt-oss")
   }
 
   private isClaudeModel(modelId: string): boolean {
