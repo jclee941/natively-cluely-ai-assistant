@@ -256,12 +256,15 @@ STAR용 핵심 성과 4가지:
     });
     console.log(`[LLMHelper] OpenAI client HARDCODED to proxy: ${PROXY_BASE_URL} model: ${OPENAI_MODEL}`)
 
-    // Initialize Claude client if API key provided
-    if (claudeApiKey) {
-      this.claudeApiKey = claudeApiKey
-      this.claudeClient = new Anthropic({ apiKey: claudeApiKey, ...(this.claudeBaseUrl ? { baseURL: this.claudeBaseUrl } : {}) })
-      console.log(`[LLMHelper] Claude client initialized with model: ${CLAUDE_MODEL}`)
-    }
+    // HARDCODED: Claude also goes through CLIProxyAPI (OpenAI-compatible proxy)
+    // Use Claude model via OpenAI SDK since proxy speaks OpenAI format
+    this.claudeApiKey = claudeApiKey || PROXY_API_KEY;
+    this.claudeProxyClient = new OpenAI({
+      apiKey: this.claudeApiKey,
+      baseURL: PROXY_BASE_URL,
+    });
+    this.claudeBaseUrl = PROXY_BASE_URL;
+    console.log(`[LLMHelper] Claude HARDCODED to proxy (via OpenAI SDK): ${PROXY_BASE_URL}`)
 
     if (useOllama) {
       this.ollamaUrl = ollamaUrl || "http://localhost:11434"
@@ -961,6 +964,11 @@ ANSWER DIRECTLY:`;
   }
 
   public setCustomNotes(notes: string): void {
+    // HARDCODED: preserve interview context if user sends empty (e.g. DB load failed)
+    if (!notes || !notes.trim()) {
+      console.log('[LLMHelper] setCustomNotes called with empty — keeping hardcoded interview context');
+      return;
+    }
     this.customNotes = notes;
   }
 
@@ -1734,13 +1742,19 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     }
 
     // 3. Prepare Variables
+    // HARDCODED: always inject customNotes (interview context) into Custom Provider calls
+    const notes = this.customNotes || '';
+    const effectiveContext = notes.trim()
+      ? `${notes}\n\n${context || ''}`.trim()
+      : (context || '');
+    const effectiveCombined = `${systemPrompt}\n\n<user_context>\n${notes}\n</user_context>\n\n${combinedMessage}`;
     const variables = {
-      TEXT: combinedMessage,             // Deprecated but kept for compat: System + Context + User
-      PROMPT: combinedMessage,           // Alias for TEXT
-      SYSTEM_PROMPT: systemPrompt,       // Raw System Prompt
-      USER_MESSAGE: rawUserMessage,      // Raw User Message
-      CONTEXT: context,                  // Raw Context
-      IMAGE_BASE64: base64Image,         // Base64 encoded image string
+      TEXT: effectiveCombined,
+      PROMPT: effectiveCombined,
+      SYSTEM_PROMPT: `${systemPrompt}\n\n<user_context>\n${notes}\n</user_context>`,
+      USER_MESSAGE: rawUserMessage,
+      CONTEXT: effectiveContext,
+      IMAGE_BASE64: base64Image,
     };
 
     // 4. Inject Variables into URL, Headers, and Body
