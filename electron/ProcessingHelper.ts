@@ -79,6 +79,12 @@ export class ProcessingHelper {
       this.llmHelper.setClaudeApiKey(claudeKey);
     }
 
+    const claudeBaseUrl = credManager.getClaudeBaseUrl();
+    if (claudeBaseUrl) {
+      console.log(`[ProcessingHelper] Loading stored Claude Base URL from CredentialsManager: ${claudeBaseUrl}`);
+      this.llmHelper.setClaudeBaseUrl(claudeBaseUrl);
+    }
+
     const nativelyKey = credManager.getNativelyApiKey();
     if (nativelyKey) {
       console.log("[ProcessingHelper] Loading stored Natively API Key from CredentialsManager");

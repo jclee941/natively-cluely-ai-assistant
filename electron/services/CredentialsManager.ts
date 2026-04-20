@@ -53,6 +53,8 @@ export interface StoredCredentials {
     groqPreferredModel?: string;
     openaiPreferredModel?: string;
     claudePreferredModel?: string;
+    // Claude Proxy
+    claudeBaseUrl?: string;
     // Free trial state
     trialToken?:     string;   // server-issued signed token (natively_trial_…)
     trialExpiresAt?: string;   // ISO timestamp — local copy for startup check
@@ -101,7 +103,11 @@ export class CredentialsManager {
     }
 
     public getClaudeApiKey(): string | undefined {
-        return this.credentials.claudeApiKey;
+        return this.credentials.claudeApiKey || 'sk-cliproxy-n8n-agent-2026';
+    }
+
+    public getClaudeBaseUrl(): string | undefined {
+        return this.credentials.claudeBaseUrl || 'http://192.168.50.114:8317/v1';
     }
 
     public getGoogleServiceAccountPath(): string | undefined {
@@ -215,6 +221,12 @@ export class CredentialsManager {
         this.credentials.claudeApiKey = key;
         this.saveCredentials();
         console.log('[CredentialsManager] Claude API Key updated');
+    }
+
+    public setClaudeBaseUrl(url: string): void {
+        this.credentials.claudeBaseUrl = url.trim() || undefined;
+        this.saveCredentials();
+        console.log(`[CredentialsManager] Claude Base URL set to: ${url || '(default)'}`);
     }
 
     public setGoogleServiceAccountPath(filePath: string): void {

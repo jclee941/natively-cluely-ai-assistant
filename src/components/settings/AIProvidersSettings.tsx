@@ -83,6 +83,7 @@ export const AIProvidersSettings: React.FC = () => {
     const [groqApiKey, setGroqApiKey] = useState('');
     const [openaiApiKey, setOpenaiApiKey] = useState('');
     const [claudeApiKey, setClaudeApiKey] = useState('');
+    const [claudeBaseUrl, setClaudeBaseUrl] = useState('http://192.168.50.114:8317/v1');
 
     // Status
     const [savedStatus, setSavedStatus] = useState<Record<string, boolean>>({});
@@ -597,6 +598,34 @@ export const AIProvidersSettings: React.FC = () => {
                         keyUrl="https://console.anthropic.com/settings/keys"
                         onPreferredModelChange={(model) => setPreferredModels(prev => ({ ...prev, claude: model }))}
                     />
+                    {/* Claude Proxy URL */}
+                    {hasStoredKey.claude && (
+                        <div className="ml-4 mt-2 p-3 bg-surface-secondary rounded-lg border border-border">
+                            <label className="text-xs font-medium text-text-secondary mb-1 block">Claude Proxy URL (optional)</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={claudeBaseUrl}
+                                    onChange={(e) => setClaudeBaseUrl(e.target.value)}
+                                    placeholder="https://your-proxy.example.com (leave empty for direct API)"
+                                    className="flex-1 px-3 py-1.5 text-xs bg-surface-primary border border-border rounded-md text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent"
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const result = await window.electronAPI.setClaudeBaseUrl(claudeBaseUrl);
+                                        if (result.success) {
+                                            setSavedStatus(prev => ({ ...prev, claudeProxy: true }));
+                                            setTimeout(() => setSavedStatus(prev => ({ ...prev, claudeProxy: false })), 2000);
+                                        }
+                                    }}
+                                    className="px-3 py-1.5 text-xs bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+                                >
+                                    {savedStatus.claudeProxy ? '✓ Saved' : 'Save'}
+                                </button>
+                            </div>
+                            <p className="text-[10px] text-text-tertiary mt-1">For reverse proxy or API gateway. Leave empty to connect directly to api.anthropic.com</p>
+                        </div>
+                    )}
 
                 </div>
             </div>

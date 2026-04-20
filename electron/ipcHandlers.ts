@@ -900,6 +900,28 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
+  safeHandle("set-claude-base-url", async (_, url: string) => {
+    try {
+      const { CredentialsManager } = require('./services/CredentialsManager');
+      CredentialsManager.getInstance().setClaudeBaseUrl(url);
+
+      const llmHelper = appState.processingHelper.getLLMHelper();
+      llmHelper.setClaudeBaseUrl(url);
+
+      // Re-init so existing Claude client picks up new base URL
+      if (CredentialsManager.getInstance().getClaudeApiKey()) {
+        llmHelper.setClaudeApiKey(CredentialsManager.getInstance().getClaudeApiKey()!);
+      }
+      appState.getIntelligenceManager().resetEngine();
+      appState.getIntelligenceManager().initializeLLMs();
+
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error saving Claude Base URL:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   // ── Usage cache (60-second TTL, keyed by API key) ──────────────────────────
   const _usageCache = new Map<string, { data: any; ts: number }>();
   const USAGE_CACHE_TTL_MS = 60_000;

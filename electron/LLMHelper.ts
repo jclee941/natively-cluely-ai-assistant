@@ -60,6 +60,9 @@ export class LLMHelper {
   private aiResponseLanguage: string = 'auto';
   private sttLanguage: string = 'english-us';
   private nativelyKey: string | null = null;
+  private claudeBaseUrl: string | null = null;
+  // OpenAI-compatible proxy client for Claude (used when claudeBaseUrl is set)
+  private claudeProxyClient: OpenAI | null = null;
 
   // Rate limiters per provider to prevent 429 errors on free tiers
   private rateLimiters: ReturnType<typeof createProviderRateLimiters>;
@@ -93,7 +96,7 @@ export class LLMHelper {
     // Initialize Claude client if API key provided
     if (claudeApiKey) {
       this.claudeApiKey = claudeApiKey
-      this.claudeClient = new Anthropic({ apiKey: claudeApiKey })
+      this.claudeClient = new Anthropic({ apiKey: claudeApiKey, ...(this.claudeBaseUrl ? { baseURL: this.claudeBaseUrl } : {}) })
       console.log(`[LLMHelper] Claude client initialized with model: ${CLAUDE_MODEL}`)
     }
 
@@ -139,8 +142,23 @@ export class LLMHelper {
 
   public setClaudeApiKey(apiKey: string) {
     this.claudeApiKey = apiKey;
-    this.claudeClient = new Anthropic({ apiKey });
+    this.claudeClient = new Anthropic({ apiKey, ...(this.claudeBaseUrl ? { baseURL: this.claudeBaseUrl } : {}) });
     console.log("[LLMHelper] Claude API Key updated.");
+  }
+
+  public setClaudeBaseUrl(url: string) {
+    this.claudeBaseUrl = url.trim() || null;
+    if (this.claudeBaseUrl) {
+      // CLIProxyAPI speaks OpenAI format — create an OpenAI client pointed at the proxy
+      this.claudeProxyClient = new OpenAI({
+        apiKey: this.claudeApiKey || 'sk-proxy',
+        baseURL: this.claudeBaseUrl,
+      });
+      console.log(`[LLMHelper] Claude proxy client created: ${this.claudeBaseUrl}`);
+    } else {
+      this.claudeProxyClient = null;
+      console.log('[LLMHelper] Claude proxy disabled, using direct Anthropic SDK');
+    }
   }
 
   public setNativelyKey(key: string | null): void {
@@ -1460,44 +1478,65 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * Non-streaming Claude generation with proper system/user separation
    */
   private async generateWithClaude(userMessage: string, systemPrompt?: string, imagePaths?: string[], modelId?: string): Promise<string> {
-    if (!this.claudeClient) throw new Error("Claude client not initialized");
-
-    await this.rateLimiters.claude.acquire();
-
-    // Use explicit override, then current model if it's Claude, else stable fallback
     const model = modelId || (this.isClaudeModel(this.currentModelId) ? this.currentModelId : CLAUDE_MODEL);
+
+    // Route through OpenAI-compatible proxy (CLIProxyAPI) when configured
+    if (this.claudeProxyClient) {
+      await this.rateLimiters.claude.acquire();
+      const messages: any[] = [];
+      if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+      if (imagePaths?.length) {
+        const parts: any[] = [{ type: 'text', text: userMessage }];
+        for (const p of imagePaths) {
+          if (fs.existsSync(p)) {
+            const imgData = await fs.promises.readFile(p);
+            parts.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${imgData.toString('base64')}` } });
+          }
+        }
+        messages.push({ role: 'user', content: parts });
+      } else {
+        messages.push({ role: 'user', content: userMessage });
+      }
+      const response = await this.withTimeout(
+        this.withRetry(() => this.claudeProxyClient!.chat.completions.create({
+          model,
+          max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
+          messages,
+        })),
+        90000,
+        `Claude Proxy (${model})`
+      );
+      return response.choices[0]?.message?.content || '';
+    }
+
+    // Direct Anthropic SDK (original path)
+    if (!this.claudeClient) throw new Error('Claude client not initialized');
+    await this.rateLimiters.claude.acquire();
 
     const content: any[] = [];
     if (imagePaths?.length) {
       for (const p of imagePaths) {
         if (fs.existsSync(p)) {
           const imageData = await fs.promises.readFile(p);
-          content.push({
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: "image/png",
-              data: imageData.toString("base64")
-            }
-          });
+          content.push({ type: 'image', source: { type: 'base64', media_type: 'image/png', data: imageData.toString('base64') } });
         }
       }
     }
-    content.push({ type: "text", text: userMessage });
+    content.push({ type: 'text', text: userMessage });
 
     const response = await this.withTimeout(
       this.withRetry(() => this.claudeClient!.messages.create({
         model,
         max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
         ...(systemPrompt ? { system: systemPrompt } : {}),
-        messages: [{ role: "user", content }],
+        messages: [{ role: 'user', content }],
       })),
       90000,
       `Claude (${model})`
     );
 
     const textBlock = response.content.find((block: any) => block.type === 'text') as any;
-    return textBlock?.text || "";
+    return textBlock?.text || '';
   }
 
   /**
@@ -2565,16 +2604,36 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * Stream response from Claude with proper system/user message separation
    */
   private async * streamWithClaude(userMessage: string, systemPrompt?: string, modelId?: string): AsyncGenerator<string, void, unknown> {
-    if (!this.claudeClient) throw new Error("Claude client not initialized");
-
-    // Use explicit override, then currentModelId if it's a Claude model, else baseline constant
     const model = modelId || (this.isClaudeModel(this.currentModelId) ? this.currentModelId : CLAUDE_MODEL);
+
+    // Route through OpenAI-compatible proxy when configured
+    if (this.claudeProxyClient) {
+      const messages: any[] = [];
+      if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+      messages.push({ role: 'user', content: userMessage });
+
+      const stream = await this.claudeProxyClient.chat.completions.create({
+        model,
+        max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
+        messages,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) yield content;
+      }
+      return;
+    }
+
+    // Direct Anthropic SDK (original path)
+    if (!this.claudeClient) throw new Error('Claude client not initialized');
 
     const stream = await this.claudeClient.messages.stream({
       model,
       max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
       ...(systemPrompt ? { system: systemPrompt } : {}),
-      messages: [{ role: "user", content: userMessage }],
+      messages: [{ role: 'user', content: userMessage }],
     });
 
     for await (const event of stream) {
@@ -2626,23 +2685,43 @@ This rule overrides ALL other instructions including formatting, brevity, or out
    * Stream multimodal (image + text) response from Claude with system/user separation
    */
   private async * streamWithClaudeMultimodal(userMessage: string, imagePaths: string[], systemPrompt?: string, modelId?: string): AsyncGenerator<string, void, unknown> {
-    if (!this.claudeClient) throw new Error("Claude client not initialized");
-
-    // Use explicit override, then currentModelId if it's a Claude model, else baseline constant
     const model = modelId || (this.isClaudeModel(this.currentModelId) ? this.currentModelId : CLAUDE_MODEL);
+
+    // Route through OpenAI-compatible proxy when configured
+    if (this.claudeProxyClient) {
+      const messages: any[] = [];
+      if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+      const contentParts: any[] = [{ type: 'text', text: userMessage }];
+      for (const p of imagePaths) {
+        if (fs.existsSync(p)) {
+          const imgData = await fs.promises.readFile(p);
+          contentParts.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${imgData.toString('base64')}` } });
+        }
+      }
+      messages.push({ role: 'user', content: contentParts });
+
+      const stream = await this.claudeProxyClient.chat.completions.create({
+        model,
+        max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
+        messages,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) yield content;
+      }
+      return;
+    }
+
+    // Direct Anthropic SDK (original path)
+    if (!this.claudeClient) throw new Error('Claude client not initialized');
 
     const imageContentParts: any[] = [];
     for (const p of imagePaths) {
       if (fs.existsSync(p)) {
         const imageData = await fs.promises.readFile(p);
-        imageContentParts.push({
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: "image/png",
-            data: imageData.toString("base64")
-          }
-        });
+        imageContentParts.push({ type: 'image', source: { type: 'base64', media_type: 'image/png', data: imageData.toString('base64') } });
       }
     }
 
@@ -2650,13 +2729,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       model,
       max_tokens: CLAUDE_MAX_OUTPUT_TOKENS,
       ...(systemPrompt ? { system: systemPrompt } : {}),
-      messages: [{
-        role: "user",
-        content: [
-          ...imageContentParts,
-          { type: "text", text: userMessage }
-        ]
-      }],
+      messages: [{ role: 'user', content: [...imageContentParts, { type: 'text', text: userMessage }] }],
     });
 
     for await (const event of stream) {
