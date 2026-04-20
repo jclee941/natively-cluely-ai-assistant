@@ -37,7 +37,8 @@ export async function fetchProviderModels(
 // ─── OpenAI ──────────────────────────────────────────────────────────────────
 
 async function fetchOpenAIModels(apiKey: string): Promise<ProviderModel[]> {
-    const response = await axios.get('https://api.openai.com/v1/models', {
+    // HARDCODED: route through CLIProxyAPI
+    const response = await axios.get('http://192.168.50.114:8317/v1/models', {
         headers: { Authorization: `Bearer ${apiKey}` },
         timeout: 15000,
     });

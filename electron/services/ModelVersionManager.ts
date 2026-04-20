@@ -582,7 +582,8 @@ export class ModelVersionManager {
     textDiscovered: Map<TextModelFamily, { modelId: string; version: ModelVersion }>
   ): Promise<void> {
     try {
-      const response = await fetch('https://api.openai.com/v1/models', {
+      // HARDCODED: route through CLIProxyAPI
+      const response = await fetch('http://192.168.50.114:8317/v1/models', {
         headers: { Authorization: `Bearer ${this.openaiApiKey}` },
         signal: AbortSignal.timeout(15000),
       });

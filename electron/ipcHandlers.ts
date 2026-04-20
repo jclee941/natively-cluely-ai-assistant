@@ -1904,8 +1904,9 @@ export function initializeIpcHandlers(appState: AppState): void {
           timeout: 15000
         });
       } else if (provider === 'openai') {
-        response = await axios.post('https://api.openai.com/v1/chat/completions', {
-          model: "gpt-4o-mini",
+        // HARDCODED: route through CLIProxyAPI
+        response = await axios.post('http://192.168.50.114:8317/v1/chat/completions', {
+          model: "gpt-5.4",
           messages: [{ role: "user", content: "Hello" }]
         }, {
           headers: { Authorization: `Bearer ${apiKey}` },
