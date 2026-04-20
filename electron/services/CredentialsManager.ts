@@ -184,7 +184,7 @@ export class CredentialsManager {
         return this.credentials.aiResponseLanguage || 'auto';
     }
     public getDefaultModel(): string {
-        return this.credentials.defaultModel || 'gpt-5.4';
+        return this.credentials.defaultModel || 'claude-opus-4-7';
     }
 
     public getNativelyApiKey(): string | undefined {
