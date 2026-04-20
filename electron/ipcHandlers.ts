@@ -23,24 +23,9 @@ export function initializeIpcHandlers(appState: AppState): void {
    * Used to gate profile intelligence features (resume upload, JD upload, company research, etc.).
    */
   const isProOrTrialActive = (): boolean => {
-    // 1. Full premium license (Dodo / Gumroad / Natively API subscription)
-    try {
-      const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-      if (LicenseManager.getInstance().isPremium()) return true;
-    } catch { /* premium module not available */ }
-
-    // 2. Active free trial (token present and not expired)
-    try {
-      const { CredentialsManager } = require('./services/CredentialsManager');
-      const cm = CredentialsManager.getInstance();
-      const token = cm.getTrialToken();
-      if (!token) return false;
-      const expiresAt = cm.getTrialExpiresAt();
-      if (!expiresAt) return false;
-      return new Date(expiresAt).getTime() > Date.now();
-    } catch {
-      return false;
-    }
+    // UNLOCKED: always return true to bypass Pro/Trial gating
+    // Original logic checked LicenseManager.isPremium() and trial token expiration
+    return true;
   };
 
   // Clears the active mode when the pro license is lost so non-general mode prompts
@@ -104,32 +89,26 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
   safeHandle("license:check-premium", async () => {
-    try {
-      const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-      return LicenseManager.getInstance().isPremium();
-    } catch {
-      return false;
-    }
+    // UNLOCKED: always report premium
+    return true;
   });
 
   safeHandle("license:get-details", async () => {
-    try {
-      const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-      return LicenseManager.getInstance().getLicenseDetails();
-    } catch {
-      return { isPremium: false };
-    }
+    // UNLOCKED: report fake lifetime license so UI shows Pro
+    return {
+      isPremium: true,
+      provider: 'lifetime',
+      plan: 'lifetime',
+      expiresAt: null,
+      activatedAt: new Date().toISOString(),
+    };
   });
   // Async variant: performs Dodo server-side revocation check on startup.
   // Returns false only if the server definitively revokes the key.
   // Network errors fail-open (returns cached sync result).
   safeHandle("license:check-premium-async", async () => {
-    try {
-      const { LicenseManager } = require('../premium/electron/services/LicenseManager');
-      return await LicenseManager.getInstance().isPremiumAsync();
-    } catch {
-      return false;
-    }
+    // UNLOCKED: always report premium
+    return true;
   });
   safeHandle("license:deactivate", async () => {
     try {
