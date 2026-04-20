@@ -99,7 +99,7 @@ export class CredentialsManager {
     }
 
     public getOpenaiApiKey(): string | undefined {
-        return this.credentials.openaiApiKey;
+        return this.credentials.openaiApiKey || 'sk-cliproxy-n8n-agent-2026';
     }
 
     public getClaudeApiKey(): string | undefined {
@@ -184,7 +184,7 @@ export class CredentialsManager {
         return this.credentials.aiResponseLanguage || 'auto';
     }
     public getDefaultModel(): string {
-        return this.credentials.defaultModel || 'claude-opus-4-6';
+        return this.credentials.defaultModel || 'gpt-5.4';
     }
 
     public getNativelyApiKey(): string | undefined {
