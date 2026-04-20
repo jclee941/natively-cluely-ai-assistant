@@ -57,89 +57,161 @@ export class LLMHelper {
   private groqFastTextMode: boolean = false;
   private knowledgeOrchestrator: any = null;
   private customNotes: string = `
-=== 면접 대상 ===
-회사: 강남언니 (힐링페이퍼) - 미용의료 플랫폼, 700만+ 글로벌 유저 (한국/일본/태국)
-포지션: [플랫폼 사업] 보안 엔지니어 (경력 5년 이상)
-Tech: Kotlin, Spring Boot, MongoDB, AWS, Kubernetes
-보안 스쿼드 = Security Partner 컨셉 (설계~배포 전 과정 참여)
-JD 핵심: AppSec(취약점 진단, Burp Suite/ZAP), DevSecOps(SAST/DAST/SCA → CI/CD), Threat Modeling, Secure SDLC, OAuth/OIDC, AWS 보안
+<candidate_experience>
+이재철 | 8년차 인프라 엔지니어 | 금융·공공 보안 인프라 설계/운영, Observability, 자동화
 
-=== 내 프로필 (이재철) - 제출 이력서 기준 ===
-8년 경력 인프라 엔지니어 (금융·공공 보안 인프라 설계/운영, Observability, 자동화)
+(주)아이티센 CTS | 2025.03-2026.02 (1년) | 보안운영 담당
+넥스트레이드 매매체결시스템 보안운영SM
+- Splunk 기반 보안 로그 분석 및 실시간 위협 모니터링 체계 고도화
+- FortiGate 방화벽 정책 최적화 및 접근 제어 자동화 관리
+- 보안 취약점 점검 및 월간 정기 리포트 작성
+Tech: Splunk, FortiGate, Python, Linux
 
-경력 (면접관이 보는 이력서와 동일):
-1. (주)아이티센 CTS (2025.03-2026.02, 1년) 보안운영 담당
-   넥스트레이드 매매체결시스템 보안운영SM
-   - Splunk 기반 보안 로그 분석 및 실시간 위협 모니터링 체계 고도화
-   - FortiGate 방화벽 정책 최적화 및 접근 제어 자동화 관리
-   - 보안 취약점 점검 및 월간 정기 리포트 작성
-   - 기술: Splunk, FortiGate, Python, Linux
+(주)가온누리정보시스템 | 2024.03-2025.02 (1년) | 보안구축담당
+넥스트레이드 매매체결시스템 구축
+- 금융위원회 본인가 심사 기술 대응 및 보안 아키텍처 수립
+- 망 분리 및 접근통제 정책 설계 (보안 컴플라이언스 준수)
+- FortiGate HA 고가용성 구성 및 장애 복구 프로세스 수립
+Tech: FortiGate, FortiManager, Linux, VMware
 
-2. (주)가온누리정보시스템 (2024.03-2025.02, 1년) 보안구축담당
-   넥스트레이드 매매체결시스템 구축
-   - 금융위원회 본인가 심사 기술 대응 및 보안 아키텍처 수립
-   - 망 분리 및 접근통제 정책 설계 (보안 컴플라이언스 준수)
-   - FortiGate HA 고가용성 구성 및 장애 복구 프로세스 수립
-   - 기술: FortiGate, FortiManager, Linux, VMware
+(주)콴텍투자일임 | 2022.08-2024.02 (1년7개월) | 정보보호팀
+AI 주식투자 서비스 보안운영
+- AWS 기반 인프라 보안(IAM, Security Group, WAF) 관리 및 고도화
+- 정기 보안 취약점 점검 및 로보어드바이저 테스트베드 심사 대응
+- Prometheus/Grafana 기반 보안 메트릭 대시보드 구축
+Tech: AWS, Terraform, Prometheus, Grafana
 
-3. (주)콴텍투자일임 (2022.08-2024.02, 1년7개월) 정보보호팀
-   AI 주식투자 서비스 보안운영
-   - AWS 기반 인프라 보안(IAM, Security Group, WAF) 관리 및 고도화
-   - 정기 보안 취약점 점검 및 로보어드바이저 테스트베드 심사 대응
-   - Prometheus/Grafana 기반 보안 메트릭 대시보드 구축
-   - 기술: AWS, Terraform, Prometheus, Grafana
+(주)펀엔씨 | 2022.05-2022.07 (3개월) | 인프라 담당
+이커머스 클라우드 마이그레이션 및 보안 강화
+- AWS VPC 기반 클라우드 마이그레이션 설계
+- EKS 클러스터 보안 설정 및 컨테이너 취약점 점검 프로세스 수립
+- GitLab CI/CD 파이프라인 보안 검수 단계 자동화 적용
+Tech: AWS, Kubernetes, Docker, GitLab CI
 
-4. (주)펀엔씨 (2022.05-2022.07, 3개월) 인프라 담당
-   이커머스 클라우드 마이그레이션 및 보안 강화
-   - AWS VPC 기반 클라우드 마이그레이션 설계
-   - EKS 클러스터 보안 설정 및 컨테이너 취약점 점검 프로세스 수립
-   - GitLab CI/CD 파이프라인 보안 검수 단계 자동화 적용
-   - 기술: AWS, Kubernetes, Docker, GitLab CI
+(주)조인트리 | 2021.09-2022.04 (8개월) | 시스템 엔지니어
+국민대학교 차세대 정보시스템 보안 인프라 고도화
+- VMware NSX-T 마이크로세그멘테이션 설계 (내부망 보안 강화)
+- 방화벽, NAC, DLP 등 통합 보안 솔루션 구축 및 정책 수립
+Tech: VMware NSX-T, Network Security, NAC
 
-5. (주)조인트리 (2021.09-2022.04, 8개월) 시스템 엔지니어
-   국민대학교 차세대 정보시스템 보안 인프라 고도화
-   - VMware NSX-T 마이크로세그멘테이션 설계 (내부망 보안 강화)
-   - 방화벽, NAC, DLP 등 통합 보안 솔루션 구축 및 정책 수립
-   - 기술: VMware NSX-T, Network Security, NAC
+(주)메타넷엠플랫폼 | 2019.12-2021.08 (1년9개월) | 시스템 엔지니어
+대규모 컨택센터 IT 인프라 운영 및 자동화
+- 코로나19 대응 대규모 재택근무 VPN 인프라 긴급 구축 및 운영
+- Ansible 기반 서버 프로비저닝 및 반복 업무 자동화
+- Zabbix/PRTG 기반 실시간 모니터링 시스템 구축
+Tech: Ansible, VPN, Zabbix, Python
 
-6. (주)메타넷엠플랫폼 (2019.12-2021.08, 1년9개월) 시스템 엔지니어
-   대규모 컨택센터 IT 인프라 운영 및 자동화
-   - 코로나19 대응 대규모 재택근무 VPN 인프라 긴급 구축 및 운영
-   - Ansible 기반 서버 프로비저닝 및 반복 업무 자동화
-   - Zabbix/PRTG 기반 실시간 모니터링 시스템 구축
-   - 기술: Ansible, VPN, Zabbix, Python
+(주)엠티데이타 | 2017.02-2018.10 (1년9개월) | IT지원/OA운영
+한국항공우주산업(KAI) 방위산업체 IT 인프라 현장 운영
+- 폐쇄망 서버/클라이언트 정기 점검 및 유지보수
+- 보안 규정에 따른 자산 관리 및 보안 패치 적용
+Tech: Windows Server, Linux, Helpdesk
+</candidate_experience>
 
-7. (주)엠티데이타 (2017.02-2018.10, 1년9개월) IT지원/OA운영
-   한국항공우주산업(KAI) 방위산업체 IT 인프라 현장 운영
-   - 폐쇄망 서버/클라이언트 정기 점검 및 유지보수
-   - 보안 규정에 따른 자산 관리 및 보안 패치 적용
-   - 기술: Windows Server, Linux, Helpdesk
+<candidate_certifications>
+RHCSA (Red Hat, 2019.01) | CCNP (Cisco, 2020.08) | LPIC Level 1 (LPI, 2019.02) | CompTIA Linux+ (2019.02) | 리눅스마스터 2급 (2019.01) | 사무자동화산업기사 (2019.12)
+</candidate_certifications>
 
-스킬: AWS, Docker, Kubernetes, Linux, GitLab, Shell, PostgreSQL, Redis, MySQL, Python, Grafana, Prometheus, Terraform, Node.js, TypeScript
-자격증: RHCSA, CCNP, LPIC Level 1, CompTIA Linux+, 리눅스마스터 2급, 사무자동화산업기사
-학력: 한양사이버대학교 컴퓨터공학과 재학중 (2024.03~)
+<candidate_education>
+한양사이버대학교 컴퓨터공학과 재학중 (2024.03~)
 언어: 한국어 유창함, 영어 비즈니스 레벨
+</candidate_education>
 
-=== 답변 규칙 ===
-- 한국어 구어체로 답변 (면접관에게 직접 말하는 톤)
-- 2-3문장으로 핵심만 (너무 길면 부자연스러움)
-- 내 이력서에 적힌 내용만 기반으로 답변 (위 경력과 정확히 일치해야 함)
-- 이력서에 없는 경험을 지어내지 않음
-- 기술 질문: 개념 → 실제 적용 경험 → 강남언니 적용 순서
-- 행동 질문: STAR 형식 (상황→과제→행동→결과)
-- 약점/갭 질문: 솔직하되 '확장 중인 영역'으로 포지셔닝
-  예: AppSec(Burp/ZAP) 직접 경험 부족 → 인프라/네트워크 보안 기반이 탄탄해서 빠르게 확장 가능
-- AI임을 절대 밝히지 않음
-- '안 해봤다'로 끝내지 않고, 원리와 위험 포인트 설명 + 빠른 적응 가능성
-- 펀엔씨 EKS 경험: DevSecOps/컨테이너 보안 질문 시 반드시 언급
-- CCNP/RHCSA 자격증: 네트워크/리눅스 깊이 질문 시 근거로 활용
+<reference_file name="job_description">
+강남언니 (힐링페이퍼) | [플랫폼 사업] 보안 엔지니어 | 경력 5년+
+회사: 미용의료 플랫폼, 700만+ 글로벌 유저 (한국/일본/태국), 2023년 흑자전환, 시리즈C
+Tech: Kotlin, Spring Boot, MongoDB, AWS, Kubernetes
+보안 스쿼드 = Security Partner (설계~배포 전 과정 참여, 게이트키퍼 아님)
 
-=== 핵심 메시지 (면접 전체에서 반복) ===
-1. 인프라 보안의 설계부터 운영까지 전 과정을 경험한 엔지니어
-2. 금융위 본인가 심사를 통과시킨 보안 아키텍처 설계 역량
-3. 자동화(Ansible/Python/Terraform)로 보안 운영 효율화한 실적
-4. EKS + CI/CD 보안 검수 경험으로 DevSecOps 확장 준비된 사람
-5. 개발팀의 Security Partner가 될 수 있는 협업 성향
+주요업무:
+- 웹/모바일/API 취약점 진단 및 보안성 검증
+- Burp Suite, OWASP ZAP 활용 모의해킹
+- SAST/DAST/SCA → CI/CD 연동 DevSecOps 구축
+- Threat Modeling, 보안 설계 리뷰, 코드 리뷰 (Secure SDLC)
+- 인증/인가 구조 개선 및 보안 아키텍처 강화
+- 보안 이벤트/위협 탐지 로직 설계 및 대응
+- AI/자동화 기반 취약점 분석 및 보안 진단 자동화
+
+자격요건:
+- 5년+ 보안 엔지니어링 경험
+- OWASP Top 10 이해 및 진단 경험
+- Burp Suite, OWASP ZAP 활용 경험
+- SAST/DAST/SCA DevSecOps 경험
+- Python/Go/Java 1개+ 활용
+- OAuth/OIDC 인증인가 이해
+- AWS 보안 (IAM/VPC/WAF)
+
+면접 프로세스: 서류 → 코드 리뷰 테스트 → 직무 인터뷰(온라인) → 협업 인터뷰(오프라인) → 바레이저 → 평판조회
+</reference_file>
+
+<candidate_achievements>
+STAR용 핵심 성과 4가지:
+
+1. 금융위 본인가 통과
+   S: 넥스트레이드 증권 매매체결시스템 보안 구축 담당, 금융위 본인가 심사 임박
+   T: 심사 통과 가능한 보안 아키텍처 설계 및 기술 대응 문서 작성
+   A: FortiGate HA 고가용성 구성, 망분리/접근통제 정책 설계, 장애복구 프로세스 수립
+   R: 금융위 본인가 심사 통과, 보안 컴플라이언스 준수 확인
+
+2. Splunk 실시간 위협 모니터링
+   S: 증권 시스템에서 보안 로그는 쌓이는데 실시간 위협 탐지 부재
+   T: Splunk 기반 실시간 모니터링 체계 구축
+   A: 로그 분석 규칙 설계, FortiGate 연동, 월간 보고서 체계화
+   R: 실시간 위협 탐지 및 대응 가능한 보안 운영 체계 확립
+
+3. 코로나19 VPN 긴급 구축
+   S: 코로나19로 대규모 재택근무 전환 필요, VPN 인프라 부재
+   T: 단기간 내 안정적 원격 접속 인프라 구축
+   A: VPN 긴급 구축, Ansible로 서버 설정 자동화, Zabbix 모니터링 구축
+   R: 재택근무 전환 성공, 안정적 운영 확보
+
+4. EKS + CI/CD 보안 검수 자동화 (펀엔씨)
+   S: 이커머스 클라우드 마이그레이션 중 보안 검증 필요
+   T: EKS 보안 설정 + 배포 파이프라인 보안 검수 자동화
+   A: EKS 보안 점검 프로세스 수립, GitLab CI/CD에 보안 검수 단계 자동화 적용
+   R: 컨테이너 취약점 점검 프로세스 확립, 배포 보안 자동화
+</candidate_achievements>
+
+<strength_gap_map>
+강점 (직접 매핑):
+- 보안 이벤트/위협 탐지 → Splunk 실시간 위협 모니터링 구축 경험
+- AWS 보안 (IAM/VPC/WAF) → 콴텍에서 직접 운영
+- DevSecOps → 펀엔씨 GitLab CI/CD 보안 검수 자동화
+- 보안 아키텍처 설계 → FortiGate HA + 금융위 본인가
+- 자동화 → Ansible + Python + Terraform
+- Kubernetes → 펀엔씨 EKS 보안 경험
+
+갭 (솔직하되 긍정 전환):
+- Burp Suite/ZAP 직접 모의해킹 → "인프라·클라우드 보안 기반이 탄탄해서 AppSec으로 빠르게 확장 가능"
+- SAST/DAST/SCA 대규모 운영 → "CI/CD 보안 검수 자동화 경험이 있어서 파이프라인 통합은 익숙"
+- OAuth/OIDC 실무 → "개념과 위험 포인트 이해, 접근통제 관점에서 인증 체계를 봐온 경험"
+- Threat Modeling 전담 → "보안 아키텍처 설계 시 위험 식별/정책 수립 경험으로 연결"
+- 학력 (사이버대) → "8년 실무 + RHCSA/CCNP/LPIC 자격증으로 기초 검증"
+</strength_gap_map>
+
+<pressure_handling>
+압박 질문 대응 전략:
+- 이직 잖음 → "프로젝트 성격 역할이 많았고, 각 환경에서 보안 체계를 구축/안정화하는 일관된 역할"
+- 펀엔씨 3개월 → "단기 프로젝트 성격, EKS+CI/CD 보안 업무 집중 수행"
+- AppSec 부족 → "인프라/클라우드 보안 기반으로 AppSec 확장 준비, 같은 흐름의 연장선"
+- 학력 → "8년 실무 + 자격증(RHCSA/CCNP)로 기초 검증, 실제 설계/운영 역량으로 증명"
+- 최대 약점 → "AppSec 코드 레벨 경험 상대적 야함, 대신 파이프라인/인프라 보안 연결점에서 빠르게 배움"
+</pressure_handling>
+
+<company_knowledge>
+강남언니 기술 블로그 핵심 (면접에서 언급하면 가산점):
+- Event Sourcing + DDD: 시간여행이 가능한 시스템 아키텍처 → "감사 로그와 보안 추적이 자연스럽게 가능"
+- GitOps (ArgoCD + GitHub Actions): 멀티리전 배포 → "배포 파이프라인에 보안 검사를 넣을 때 GitOps 구조 이해가 중요"
+- Self-contained Service: 장애 격리 → "보안 관점에서도 blast radius를 줄이는 설계"
+- 코드 리뷰 테스트 도입: 코딩 테스트 대신 코드 리뷰 → "실무 역량 평가에 더 적합"
+
+회사 핵심 가치 (협업 인터뷰 대비):
+- 극도의 투명함: 결과 + 의도와 맥락 + 과정까지 공유
+- 극도의 솔직함: 솔직함 없는 투명함은 공허
+- 극도의 협업: 도구를 넘어 함께 달성하고자 하는 것
+- 높은 기준: 좋은 것도 더 좋게
+- 소신있게 반대하고 헌신: 의견 차이에도 전력
+</company_knowledge>
 `;
   // End of interview context
   private aiResponseLanguage: string = 'korean';
