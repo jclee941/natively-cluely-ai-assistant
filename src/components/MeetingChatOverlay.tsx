@@ -118,7 +118,7 @@ const AssistantMessage: React.FC<{ content: string; isStreaming?: boolean }> = (
                                 const lang = match ? match[1] : '';
 
                                 return !isInline ? (
-                                    <div className="my-3 rounded-xl overflow-hidden border border-white/[0.08] shadow-lg bg-zinc-800/60 backdrop-blur-md">
+                                    <div className="my-3 rounded-xl overflow-hidden border border-white/[0.12] shadow-lg bg-zinc-800/95 backdrop-blur-md">
                                         <div className="bg-white/[0.04] px-3 py-1.5 border-b border-white/[0.08]">
                                             <span className="text-[10px] uppercase tracking-widest font-semibold text-white/40 font-mono">
                                                 {lang || 'CODE'}

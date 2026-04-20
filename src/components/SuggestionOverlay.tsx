@@ -103,7 +103,7 @@ export const SuggestionOverlay: React.FC<SuggestionOverlayProps> = ({ className 
 
             {/* Current transcript (interviewer's speech) */}
             {currentTranscript && (
-                <div className="transcript-bubble mb-3 p-3 rounded-lg bg-gray-800/80 backdrop-blur-sm border border-gray-700">
+                <div className="transcript-bubble mb-3 p-3 rounded-lg bg-gray-800/95 backdrop-blur-md border border-gray-700">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-blue-400">
                             {currentTranscript.speaker === 'interviewer' ? '🎤 Interviewer' : '👤 You'}
@@ -126,7 +126,7 @@ export const SuggestionOverlay: React.FC<SuggestionOverlayProps> = ({ className 
 
             {/* AI Suggestion */}
             {suggestion && !isProcessing && (
-                <div className="suggestion-card p-4 rounded-lg bg-gradient-to-br from-indigo-900/80 to-purple-900/80 backdrop-blur-sm border border-indigo-500/50 shadow-lg shadow-indigo-500/20">
+                <div className="suggestion-card p-4 rounded-lg bg-gradient-to-br from-indigo-900/95 to-purple-900/95 backdrop-blur-md border border-indigo-500/50 shadow-lg shadow-indigo-500/20">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-medium text-indigo-300">💡 Suggested Response</span>
                         <span className="text-xs text-gray-400">
