@@ -20,10 +20,11 @@ export const STANDARD_CLOUD_MODELS: Record<string, {
         pmKey: 'openaiPreferredModel'
     },
     claude: {
-        hasKeyCheck: (creds) => !!creds?.hasClaudeKey,
-        ids: ['claude-sonnet-4-6'],
-        names: ['Sonnet 4.6'],
-        descs: ['Anthropic'],
+        // HARDCODED: always show Claude (proxy provides it)
+        hasKeyCheck: () => true,
+        ids: ['claude-opus-4-7', 'claude-sonnet-4-5-20250929'],
+        names: ['Claude Opus 4.7', 'Claude Sonnet 4.5'],
+        descs: ['Anthropic', 'Anthropic'],
         pmKey: 'claudePreferredModel'
     },
     groq: {
