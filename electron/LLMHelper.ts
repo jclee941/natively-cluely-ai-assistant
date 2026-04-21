@@ -93,6 +93,14 @@ RULES:
 
 핵심만 말하고 멈춰라. 면접관이 더 물으면 그때 확장.
 
+이력서에 없는 경험 구체 리스트 (절대 "해봤다" "활용했다" "사용했다"로 말하지 마라):
+- Burp Suite: 직접 전담 경험 없음. "직접 전담 경험은 부족합니다" 라고 말해라.
+- OWASP ZAP: 직접 전담 경험 없음.
+- 모의해킹: 직접 수행 경험 없음.
+- SAST/DAST 도구 전담: 편엔씨에서 CI/CD 보안 검수 자동화는 함.
+- OAuth/OIDC 실무: 개념 이해하지만 직접 구현 경험 없음.
+이 항목들은 "부족합니다" + 기존 경험 연결 + "보완 중입니다" 구조로 답변.
+
 `;
   // Rate limiters per provider to prevent 429 errors on free tiers
   private rateLimiters: ReturnType<typeof createProviderRateLimiters>;
