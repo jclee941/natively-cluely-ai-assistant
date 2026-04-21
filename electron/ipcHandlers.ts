@@ -2703,56 +2703,36 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:upload-resume", async (_, filePath: string) => {
     try {
+      if (!isProOrTrialActive()) {
+        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
+      }
       console.log(`[IPC] profile:upload-resume called with: ${filePath}`);
-      const fs = require('fs');
-      const path = require('path');
-      let content = '';
-      const ext = path.extname(filePath).toLowerCase();
-      if (ext === '.txt' || ext === '.md') {
-        content = fs.readFileSync(filePath, 'utf8');
-      } else if (ext === '.pdf') {
-        try {
-          const pdfParse = require('pdf-parse');
-          const buf = fs.readFileSync(filePath);
-          const data = await pdfParse(buf);
-          content = data.text;
-        } catch {
-          content = `[PDF uploaded: ${path.basename(filePath)}]`;
-        }
-      } else {
-        content = fs.readFileSync(filePath, 'utf8');
+      const orchestrator = appState.getKnowledgeOrchestrator();
+      if (!orchestrator) {
+        return { success: false, error: 'Knowledge engine not initialized. Please ensure API keys are configured.' };
       }
-      const llmHelper = appState.processingHelper?.getLLMHelper?.();
-      if (llmHelper && content.trim()) {
-        const existing = llmHelper.getCustomNotes?.() || '';
-        const resumeBlock = `<uploaded_resume>\n${content.substring(0, 3000)}\n</uploaded_resume>`;
-        const merged = existing.includes('<uploaded_resume>')
-          ? existing.replace(/<uploaded_resume>[\s\S]*?<\/uploaded_resume>/, resumeBlock)
-          : `${resumeBlock}\n\n${existing}`;
-        llmHelper.setCustomNotes(merged);
-        console.log(`[IPC] Resume injected into customNotes (${content.length} chars)`);
-        elk.logEvent({ event_type: 'resume_upload', component: 'Profile', message: `Resume uploaded: ${path.basename(filePath)} (${content.length} chars)` });
-      }
-      return { success: true, message: 'Resume loaded into context' };
+      const { DocType } = require('../premium/electron/knowledge/types');
+      const result = await orchestrator.ingestDocument(filePath, DocType.RESUME);
+      return result;
     } catch (error: any) {
       console.error('[IPC] profile:upload-resume error:', error);
-      elk.error('Profile', `Resume upload failed: ${error.message}`, error);
       return { success: false, error: error.message };
     }
   });
 
   safeHandle("profile:get-status", async () => {
     try {
-      const llmHelper = appState.processingHelper?.getLLMHelper?.();
-      const notes = llmHelper?.getCustomNotes?.() || '';
-      const hasResume = notes.includes('<uploaded_resume>') || notes.includes('<candidate_experience>');
-      const hasJD = notes.includes('<uploaded_jd>') || notes.includes('<reference_file');
+      const orchestrator = appState.getKnowledgeOrchestrator();
+      if (!orchestrator) {
+        return { hasProfile: false, profileMode: false };
+      }
+      const status = orchestrator.getStatus();
       return {
-        hasProfile: hasResume,
-        profileMode: hasResume,
-        name: hasResume ? 'Resume Loaded' : undefined,
-        role: hasJD ? 'JD Loaded' : undefined,
-        totalExperienceYears: hasResume ? 8 : undefined
+        hasProfile: status.hasResume,
+        profileMode: status.activeMode,
+        name: status.resumeSummary?.name,
+        role: status.resumeSummary?.role,
+        totalExperienceYears: status.resumeSummary?.totalExperienceYears
       };
     } catch (error: any) {
       return { hasProfile: false, profileMode: false };
@@ -2829,40 +2809,19 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   safeHandle("profile:upload-jd", async (_, filePath: string) => {
     try {
+      if (!isProOrTrialActive()) {
+        return { success: false, error: 'Pro license required. Please activate a license key to use Profile Intelligence features.' };
+      }
       console.log(`[IPC] profile:upload-jd called with: ${filePath}`);
-      const fs = require('fs');
-      const path = require('path');
-      let content = '';
-      const ext = path.extname(filePath).toLowerCase();
-      if (ext === '.txt' || ext === '.md') {
-        content = fs.readFileSync(filePath, 'utf8');
-      } else if (ext === '.pdf') {
-        try {
-          const pdfParse = require('pdf-parse');
-          const buf = fs.readFileSync(filePath);
-          const data = await pdfParse(buf);
-          content = data.text;
-        } catch {
-          content = `[PDF uploaded: ${path.basename(filePath)}]`;
-        }
-      } else {
-        content = fs.readFileSync(filePath, 'utf8');
+      const orchestrator = appState.getKnowledgeOrchestrator();
+      if (!orchestrator) {
+        return { success: false, error: 'Knowledge engine not initialized. Please ensure API keys are configured.' };
       }
-      const llmHelper = appState.processingHelper?.getLLMHelper?.();
-      if (llmHelper && content.trim()) {
-        const existing = llmHelper.getCustomNotes?.() || '';
-        const jdBlock = `<uploaded_jd>\n${content.substring(0, 2000)}\n</uploaded_jd>`;
-        const merged = existing.includes('<uploaded_jd>')
-          ? existing.replace(/<uploaded_jd>[\s\S]*?<\/uploaded_jd>/, jdBlock)
-          : `${existing}\n\n${jdBlock}`;
-        llmHelper.setCustomNotes(merged);
-        console.log(`[IPC] JD injected into customNotes (${content.length} chars)`);
-        elk.logEvent({ event_type: 'jd_upload', component: 'Profile', message: `JD uploaded: ${path.basename(filePath)} (${content.length} chars)` });
-      }
-      return { success: true, message: 'JD loaded into context' };
+      const { DocType } = require('../premium/electron/knowledge/types');
+      const result = await orchestrator.ingestDocument(filePath, DocType.JD);
+      return result;
     } catch (error: any) {
       console.error('[IPC] profile:upload-jd error:', error);
-      elk.error('Profile', `JD upload failed: ${error.message}`, error);
       return { success: false, error: error.message };
     }
   });

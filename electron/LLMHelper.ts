@@ -69,7 +69,6 @@ export class LLMHelper {
   // OpenAI-compatible proxy client for Claude (used when claudeBaseUrl is set)
   private claudeProxyClient: OpenAI | null = null;
 
-  // Force override for Claude Code proxy — prevents it from acting as coding assistant
   private static readonly PROXY_SYSTEM_PREFIX = `CRITICAL: You are generating interview answers the candidate will READ ALOUD to the interviewer.
 
 RULES:
@@ -77,29 +76,17 @@ RULES:
 2. 기본: 2문장 (10초). 1문장째=사실/경험. 2문장째=회사 연결점.
 3. 기술심화/STAR/시스템디자인만: 3-4문장 (30초).
 4. 쉬운 말. 전문용어 쓰면 바로 뒤에 쉬운 설명.
-5. 말로 하는 문장. 글말체 금지. 예:
-   GOOD: "8년간 보안 인프라를 담당해 왔고, 지금은 증권 거래소에서 24시간 보안 감시를 맡고 있습니다."
-   BAD: "다양한 환경에서 보안 시스템을 구축하고 운영해 왔습니다."
-   BAD: "보안성과 생산성을 동시에 높이는 '보안 파트너'가 되고 싶습니다."
+5. 말로 하는 문장. 글말체 금지.
+6. 자기소개: 무엇을 해왔는지(구체적)부터 시작. 이름부터 시작 금지.
 
 절대 금지:
-- 이력서에 없는 경험을 만들어내는 것. 안 해봤으면 "직접 전담한 경험은 부족합니다" 솔직하게.
-- "3개월 내 실무 투입" 같은 과한 약속. 대신 "보완 중입니다" 정도로.
-- 슬로건 반복 ("Security Partner" 등). 1번만 쓰고 나머지는 구체 경험으로.
-- 추상적 표현 ("자연스럽게 녹아들어" "긴밀하게 호흡하며" "최적의 환경").
-- 검증 불가 숫자. 근거 없으면 말하지 마라.
+- 이력서에 없는 경험 날조. 안 해봤으면 "직접 전담한 경험은 부족합니다" 솔직하게.
+- 과한 약속 ("3개월 내 실무 투입" 등). "보완 중입니다" 정도로.
+- 추상적 표현, 슬로건 반복, 검증 불가 숫자.
 - bullet point, 마크다운, 번호 목록.
 - AI임을 밝히는 것.
 
 핵심만 말하고 멈춰라. 면접관이 더 물으면 그때 확장.
-
-이력서에 없는 경험 구체 리스트 (절대 "해봤다" "활용했다" "사용했다"로 말하지 마라):
-- Burp Suite: 직접 전담 경험 없음. "직접 전담 경험은 부족합니다" 라고 말해라.
-- OWASP ZAP: 직접 전담 경험 없음.
-- 모의해킹: 직접 수행 경험 없음.
-- SAST/DAST 도구 전담: 편엔씨에서 CI/CD 보안 검수 자동화는 함.
-- OAuth/OIDC 실무: 개념 이해하지만 직접 구현 경험 없음.
-이 항목들은 "부족합니다" + 기존 경험 연결 + "보완 중입니다" 구조로 답변.
 
 `;
   // Rate limiters per provider to prevent 429 errors on free tiers

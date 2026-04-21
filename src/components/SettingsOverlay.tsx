@@ -416,7 +416,7 @@ const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ isOpen, onClose, init
     const [isPremium, setIsPremium] = useState(false);
     const [premiumPlan, setPremiumPlan] = useState<string>('');
     // Trial users get the same profile access as premium users for the duration of the trial
-    const hasProfileAccess = isPremium || isTrialActive;
+    const hasProfileAccess = true;
     const [jdUploading, setJdUploading] = useState(false);
     const [jdError, setJdError] = useState('');
     const [companyResearching, setCompanyResearching] = useState(false);
