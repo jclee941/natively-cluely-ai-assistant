@@ -127,12 +127,25 @@ async function fetchAnthropicModels(apiKey: string): Promise<ProviderModel[]> {
 // ─── Gemini ──────────────────────────────────────────────────────────────────
 
 async function fetchGeminiModels(apiKey: string): Promise<ProviderModel[]> {
+    // HARDCODED: route through CLIProxyAPI instead of Google direct
     const response = await axios.get(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+        'http://192.168.50.114:8317/v1/models',
         {
+            headers: { Authorization: `Bearer sk-cliproxy-n8n-agent-2026` },
             timeout: 15000,
         }
     );
+    // Transform OpenAI-format response to Gemini-format
+    const openaiData: any[] = response.data?.data || [];
+    const geminiModels = openaiData
+        .filter((m: any) => (m.id || '').startsWith('gemini-'))
+        .map((m: any) => ({
+            name: `models/${m.id}`,
+            displayName: m.id,
+            supportedGenerationMethods: ['generateContent'],
+            description: 'via CLIProxyAPI',
+        }));
+    response.data = { models: geminiModels };
 
     const models: any[] = response.data?.models || [];
 

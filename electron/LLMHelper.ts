@@ -425,6 +425,10 @@ STAR용 핵심 성과 4가지:
     if (modelId === 'claude') targetModelId = CLAUDE_MODEL;
     if (modelId === 'llama') targetModelId = GROQ_MODEL;
 
+    // HARDCODED: normalize legacy -preview model IDs to proxy-compatible names
+    if (targetModelId === 'gemini-3.1-flash-lite-preview') targetModelId = 'gemini-3.1-flash-lite';
+    if (targetModelId === 'gemini-3.1-pro-preview') targetModelId = 'gemini-3.1-pro-low';
+
     if (targetModelId.startsWith('ollama-')) {
       this.useOllama = true;
       this.ollamaModel = targetModelId.replace('ollama-', '');
@@ -3176,6 +3180,8 @@ This rule overrides ALL other instructions including formatting, brevity, or out
   }
 
   public async forceRestartOllama(): Promise<boolean> {
+    // HARDCODED: Ollama not installed, skip silently
+    return false;
     try {
       console.log("[LLMHelper] Attempting to force restart Ollama...");
 

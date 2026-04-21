@@ -1888,11 +1888,12 @@ export function initializeIpcHandlers(appState: AppState): void {
       let response;
 
       if (provider === 'gemini') {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent`;
-        response = await axios.post(url, {
-          contents: [{ parts: [{ text: "Hello" }] }]
+        // HARDCODED: route through CLIProxyAPI
+        response = await axios.post('http://192.168.50.114:8317/v1/chat/completions', {
+          model: 'gemini-3.1-flash-lite',
+          messages: [{ role: 'user', content: 'Hello' }]
         }, {
-          headers: { 'x-goog-api-key': apiKey },
+          headers: { Authorization: `Bearer sk-cliproxy-n8n-agent-2026` },
           timeout: 15000
         });
       } else if (provider === 'groq') {
