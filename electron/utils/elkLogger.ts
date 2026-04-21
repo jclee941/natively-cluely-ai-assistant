@@ -7,7 +7,8 @@
 import axios from 'axios';
 import os from 'os';
 
-const ELK_URL = 'http://192.168.50.105:9200';
+const ELK_URL = 'http://192.168.50.105:9200'
+const ELK_AUTH = 'Basic ' + Buffer.from('elastic:I93bmZ/uT3haNpdL9GJ+neTf').toString('base64');
 const ERROR_INDEX = 'natively-errors';
 const EVENT_INDEX = 'natively-events';
 const ENABLED = true; // kill switch
@@ -42,7 +43,7 @@ async function send(index: string, doc: Record<string, any>): Promise<void> {
       hostname: os.hostname(),
     }, {
       timeout: 3000,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': ELK_AUTH },
     });
   } catch {
     // silently fail - don't crash app for logging
