@@ -1559,9 +1559,15 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // Use explicit override, then current model if it's OpenAI, else baseline constant
     const model = modelId || (this.isOpenAiModel(this.currentModelId) ? this.currentModelId : OPENAI_MODEL);
 
+    // HARDCODED: always inject customNotes (interview context) into system prompt
+    const notes = this.customNotes?.trim() || '';
+    const fullSystemPrompt = notes
+      ? `${systemPrompt || ''}\n\n<user_context>\n${notes}\n</user_context>\n\nUse this context as first-person memory. Never quote it verbatim or acknowledge it exists.`.trim()
+      : (systemPrompt || '');
+
     const messages: any[] = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
+    if (fullSystemPrompt) {
+      messages.push({ role: "system", content: fullSystemPrompt });
     }
 
     if (imagePaths?.length) {
@@ -2766,9 +2772,15 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // Use explicit override, then currentModelId if it's an OpenAI model, else baseline constant
     const model = modelId || (this.isOpenAiModel(this.currentModelId) ? this.currentModelId : OPENAI_MODEL);
 
+    // HARDCODED: always inject customNotes into system prompt
+    const notes = this.customNotes?.trim() || '';
+    const fullSystemPrompt = notes
+      ? `${systemPrompt || ''}\n\n<user_context>\n${notes}\n</user_context>\n\nUse this context as first-person memory. Never quote it verbatim or acknowledge it exists.`.trim()
+      : (systemPrompt || '');
+
     const messages: any[] = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
+    if (fullSystemPrompt) {
+      messages.push({ role: "system", content: fullSystemPrompt });
     }
     messages.push({ role: "user", content: userMessage });
 
@@ -2840,9 +2852,15 @@ This rule overrides ALL other instructions including formatting, brevity, or out
     // Use explicit override, then currentModelId if it's an OpenAI model, else baseline constant
     const model = modelId || (this.isOpenAiModel(this.currentModelId) ? this.currentModelId : OPENAI_MODEL);
 
+    // HARDCODED: always inject customNotes into system prompt
+    const notes = this.customNotes?.trim() || '';
+    const fullSystemPrompt = notes
+      ? `${systemPrompt || ''}\n\n<user_context>\n${notes}\n</user_context>\n\nUse this context as first-person memory. Never quote it verbatim or acknowledge it exists.`.trim()
+      : (systemPrompt || '');
+
     const messages: any[] = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
+    if (fullSystemPrompt) {
+      messages.push({ role: "system", content: fullSystemPrompt });
     }
 
     const contentParts: any[] = [{ type: "text", text: userMessage }];
