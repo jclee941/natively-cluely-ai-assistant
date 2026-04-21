@@ -352,7 +352,7 @@ export class CredentialsManager {
         } else {
             // Key cleared — revert natively-auto-set defaults back to safe fallbacks
             if (this.credentials.defaultModel === 'natively') {
-                this.credentials.defaultModel = 'gemini-3.1-flash-lite-preview';
+                this.credentials.defaultModel = 'gemini-3.1-flash-lite';
                 console.log('[CredentialsManager] Natively key cleared — reset default model to Gemini Flash');
             }
             if (this.credentials.sttProvider === 'natively') {

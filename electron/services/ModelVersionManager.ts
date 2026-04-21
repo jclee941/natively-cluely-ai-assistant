@@ -86,8 +86,8 @@ interface PersistedState {
 /** Hardcoded baseline models for vision Tier 1 (initial pinned stable) */
 const BASELINE_MODELS: Record<ModelFamily, string> = {
   [ModelFamily.OPENAI]: 'gpt-5.4',
-  [ModelFamily.GEMINI_FLASH]: 'gemini-3.1-flash-lite-preview',
-  [ModelFamily.GEMINI_PRO]: 'gemini-3.1-pro-preview',
+  [ModelFamily.GEMINI_FLASH]: 'gemini-3.1-flash-lite',
+  [ModelFamily.GEMINI_PRO]: 'gemini-3.1-pro-low',
   [ModelFamily.CLAUDE]: 'claude-sonnet-4-6',
   [ModelFamily.GROQ_LLAMA]: 'meta-llama/llama-4-scout-17b-16e-instruct',
 };
@@ -95,8 +95,8 @@ const BASELINE_MODELS: Record<ModelFamily, string> = {
 /** Hardcoded baseline models for text Tier 1 */
 const TEXT_BASELINE_MODELS: Record<TextModelFamily, string> = {
   [TextModelFamily.OPENAI]: 'gpt-5.4',
-  [TextModelFamily.GEMINI_FLASH]: 'gemini-3.1-flash-lite-preview',
-  [TextModelFamily.GEMINI_PRO]: 'gemini-3.1-pro-preview',
+  [TextModelFamily.GEMINI_FLASH]: 'gemini-3.1-flash-lite',
+  [TextModelFamily.GEMINI_PRO]: 'gemini-3.1-pro-low',
   [TextModelFamily.CLAUDE]: 'claude-sonnet-4-6',
   [TextModelFamily.GROQ]: 'llama-3.3-70b-versatile',
 };

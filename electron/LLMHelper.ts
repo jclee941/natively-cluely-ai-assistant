@@ -559,19 +559,8 @@ STAR용 핵심 성과 4가지:
    * NOTE: Migrated from Pro to Flash for consistency
    */
   public async generateWithPro(contents: any[]): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized")
-
-    await this.rateLimiters.gemini.acquire();
-    // console.log(`[LLMHelper] Calling ${GEMINI_FLASH_MODEL}...`)
-    const response = await this.client.models.generateContent({
-      model: GEMINI_PRO_MODEL,
-      contents: contents,
-      config: {
-        maxOutputTokens: MAX_OUTPUT_TOKENS,
-        temperature: 0.3,      // Lower = faster, more focused
-      }
-    })
-    return response.text || ""
+    // HARDCODED: delegate to generateContent which routes through proxy
+    return this.generateContent(contents, GEMINI_PRO_MODEL);
   }
 
   /**
@@ -579,19 +568,8 @@ STAR용 핵심 성과 4가지:
    * CRITICAL: Audio input MUST use this model, not Pro
    */
   public async generateWithFlash(contents: any[]): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized")
-
-    await this.rateLimiters.gemini.acquire();
-    // console.log(`[LLMHelper] Calling ${GEMINI_FLASH_MODEL}...`)
-    const response = await this.client.models.generateContent({
-      model: GEMINI_FLASH_MODEL,
-      contents: contents,
-      config: {
-        maxOutputTokens: MAX_OUTPUT_TOKENS,
-        temperature: 0.3,      // Lower = faster, more focused
-      }
-    })
-    return response.text || ""
+    // HARDCODED: delegate to generateContent which routes through proxy
+    return this.generateContent(contents, GEMINI_FLASH_MODEL);
   }
 
   /**
@@ -650,75 +628,46 @@ STAR용 핵심 성과 4가지:
    * Generate content using the currently selected model
    */
   private async generateContent(contents: any[], modelIdOverride?: string): Promise<string> {
-    if (!this.client) throw new Error("Gemini client not initialized")
+    // HARDCODED: route Gemini through CLIProxyAPI via OpenAI SDK (bypass Google direct)
+    if (!this.openaiClient) throw new Error('OpenAI/Proxy client not initialized');
 
     const targetModel = modelIdOverride || this.geminiModel;
-    console.log(`[LLMHelper] Calling ${targetModel}...`)
+    console.log(`[LLMHelper] Calling ${targetModel} via proxy (OpenAI-compat)...`)
+
+    // Convert Gemini contents format to OpenAI messages
+    // Gemini: [{ role?, parts: [{text}] }] or [{text}]
+    // OpenAI: [{ role, content }]
+    const messages: any[] = [];
+
+    // Inject customNotes as system
+    const notes = this.customNotes?.trim() || '';
+    if (notes) {
+      messages.push({
+        role: 'system',
+        content: `<user_context>\n${notes}\n</user_context>\n\nUse this context as first-person memory. Never quote it verbatim or acknowledge it exists.`
+      });
+    }
+
+    // Flatten Gemini contents into a single user message
+    const userText = contents.map((c: any) => {
+      if (typeof c === 'string') return c;
+      if (c.text) return c.text;
+      if (c.parts) return c.parts.map((p: any) => p.text || '').join('\n');
+      return '';
+    }).filter(Boolean).join('\n\n');
+
+    if (userText) {
+      messages.push({ role: 'user', content: userText });
+    }
 
     return this.withRetry(async () => {
-      // @ts-ignore
-      const response = await this.client!.models.generateContent({
+      const response = await this.openaiClient!.chat.completions.create({
         model: targetModel,
-        contents: contents,
-        config: {
-          maxOutputTokens: MAX_OUTPUT_TOKENS,
-          temperature: 0.4,
-        }
+        messages,
+        max_completion_tokens: MAX_OUTPUT_TOKENS,
       });
-
-      // Debug: log full response structure
-      // console.log(`[LLMHelper] Full response:`, JSON.stringify(response, null, 2).substring(0, 500))
-
-      const candidate = response.candidates?.[0];
-      if (!candidate) {
-        console.error("[LLMHelper] No candidates returned!");
-        console.error("[LLMHelper] Full response:", JSON.stringify(response, null, 2).substring(0, 1000));
-        return "";
-      }
-
-      if (candidate.finishReason && candidate.finishReason !== "STOP") {
-        console.warn(`[LLMHelper] Generation stopped with reason: ${candidate.finishReason}`);
-        console.warn(`[LLMHelper] Safety ratings:`, JSON.stringify(candidate.safetyRatings));
-      }
-
-      // Try multiple ways to access text - handle different response structures
-      let text = "";
-
-      // Method 1: Direct response.text
-      if (response.text) {
-        text = response.text;
-      }
-      // Method 2: candidate.content.parts array (check all parts)
-      else if (candidate.content?.parts) {
-        const parts = Array.isArray(candidate.content.parts) ? candidate.content.parts : [candidate.content.parts];
-        for (const part of parts) {
-          if (part?.text) {
-            text += part.text;
-          }
-        }
-      }
-      // Method 3: candidate.content directly (if it's a string)
-      else if (typeof candidate.content === 'string') {
-        text = candidate.content;
-      }
-
-      if (!text || text.trim().length === 0) {
-        console.error("[LLMHelper] Candidate found but text is empty.");
-        console.error("[LLMHelper] Response structure:", JSON.stringify({
-          hasResponseText: !!response.text,
-          candidateFinishReason: candidate.finishReason,
-          candidateContent: candidate.content,
-          candidateParts: candidate.content?.parts,
-        }, null, 2));
-
-        if (candidate.finishReason === "MAX_TOKENS") {
-          return "Response was truncated due to length limit. Please try a shorter question or break it into parts.";
-        }
-
-        return "";
-      }
-
-      console.log(`[LLMHelper] Extracted text length: ${text.length}`);
+      const text = response.choices[0]?.message?.content || '';
+      console.log(`[LLMHelper] Proxy response length: ${text.length}`);
       return text;
     });
   }
@@ -1327,20 +1276,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
         name: `Gemini Pro (${GEMINI_PRO_MODEL})`,
         execute: async () => {
           // Call the API directly with the Pro model instead of touching shared state
-          const response = await this.withRetry(async () => {
-            // @ts-ignore
-            const res = await this.client!.models.generateContent({
-              model: GEMINI_PRO_MODEL,
-              contents: [{ role: 'user', parts: [{ text: message }] }],
-              config: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.4 }
-            });
-            const candidate = res.candidates?.[0];
-            if (!candidate) return '';
-            if (res.text) return res.text;
-            const parts = candidate.content?.parts ?? [];
-            return (Array.isArray(parts) ? parts : [parts]).map((p: any) => p?.text ?? '').join('');
-          });
-          return response;
+          return await this.generateContent([{ role: 'user', parts: [{ text: message }] }], GEMINI_PRO_MODEL);
         }
       });
 
@@ -1348,20 +1284,7 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       providers.push({
         name: `Gemini Flash (${GEMINI_FLASH_MODEL})`,
         execute: async () => {
-          const response = await this.withRetry(async () => {
-            // @ts-ignore
-            const res = await this.client!.models.generateContent({
-              model: GEMINI_FLASH_MODEL,
-              contents: [{ role: 'user', parts: [{ text: message }] }],
-              config: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.4 }
-            });
-            const candidate = res.candidates?.[0];
-            if (!candidate) return '';
-            if (res.text) return res.text;
-            const parts = candidate.content?.parts ?? [];
-            return (Array.isArray(parts) ? parts : [parts]).map((p: any) => p?.text ?? '').join('');
-          });
-          return response;
+          return await this.generateContent([{ role: 'user', parts: [{ text: message }] }], GEMINI_FLASH_MODEL);
         }
       });
     }
@@ -2967,30 +2890,12 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       }
     }
 
-    const streamResult = await this.client.models.generateContentStream({
-      model: model,
-      contents: contents,
-      config: {
-        maxOutputTokens: MAX_OUTPUT_TOKENS,
-        temperature: 0.4,
-      }
-    });
-
-    // @ts-ignore
-    const stream = streamResult.stream || streamResult;
-
-    for await (const chunk of stream) {
-      let chunkText = "";
-      if (typeof chunk.text === 'function') {
-        chunkText = chunk.text();
-      } else if (typeof chunk.text === 'string') {
-        chunkText = chunk.text;
-      } else if (chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
-        chunkText = chunk.candidates[0].content.parts[0].text;
-      }
-      if (chunkText) {
-        yield chunkText;
-      }
+    // HARDCODED: route through proxy (non-streaming, yield chunks)
+    const fullText = await this.generateContent(contents, model);
+    // Simulate streaming by yielding chunks of ~20 chars
+    const chunkSize = 20;
+    for (let i = 0; i < fullText.length; i += chunkSize) {
+      yield fullText.substring(i, i + chunkSize);
     }
   }
 
@@ -3036,16 +2941,8 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       }
     }
 
-    const response = await this.client.models.generateContent({
-      model: model,
-      contents: contents,
-      config: {
-        maxOutputTokens: MAX_OUTPUT_TOKENS,
-        temperature: 0.4,
-      }
-    });
-
-    return response.text || "";
+    // HARDCODED: route through proxy
+    return await this.generateContent(contents, model);
   }
 
   // --- OLLAMA STREAMING ---
@@ -3682,20 +3579,11 @@ This rule overrides ALL other instructions including formatting, brevity, or out
       for (let attempt = 1; attempt <= maxProRetries; attempt++) {
         try {
           console.log(`[LLMHelper] 🔄 Gemini Pro Attempt ${attempt}/${maxProRetries}...`);
-          const response = await this.withTimeout(
-            // @ts-ignore
-            this.client.models.generateContent({
-              model: GEMINI_PRO_MODEL,
-              contents: contents,
-              config: {
-                maxOutputTokens: MAX_OUTPUT_TOKENS,
-                temperature: 0.3,
-              }
-            }),
+          const text = await this.withTimeout(
+            this.generateContent(contents, GEMINI_PRO_MODEL),
             60000,
             `Gemini Pro Summary (Attempt ${attempt})`
           );
-          const text = response.text || "";
 
           if (text.trim().length > 0) {
             console.log(`[LLMHelper] ✅ Gemini Pro summary generated successfully.`);
