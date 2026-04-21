@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, systemPreferences, screen, desktopCapturer } from "electron"
+import { elk } from './utils/elkLogger'
 import path from "path"
 import fs from "fs"
 import { autoUpdater } from "electron-updater"
@@ -2633,6 +2634,7 @@ async function initializeApp() {
 
   // 2. Wait for app to be ready
   await app.whenReady()
+  elk.startup();
 
   // 2a. PRE-EMPTIVE dock hide: must happen before ANY operation that causes macOS to
   // register a dock entry (app.setName, BrowserWindow creation, etc.).

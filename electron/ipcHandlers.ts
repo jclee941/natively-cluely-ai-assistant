@@ -1,6 +1,7 @@
 // ipcHandlers.ts
 
 import { app, ipcMain, shell, dialog, desktopCapturer, systemPreferences, BrowserWindow, screen } from "electron"
+import { elk } from './utils/elkLogger'
 import { AppState } from "./main"
 import { GEMINI_FLASH_MODEL } from "./IntelligenceManager"
 import { DatabaseManager } from "./db/DatabaseManager"; // Import Database Manager
@@ -475,6 +476,7 @@ export function initializeIpcHandlers(appState: AppState): void {
 
       } catch (streamError: any) {
         console.error("[IPC] Streaming error:", streamError);
+        elk.error('IPC', `Streaming error: ${streamError.message?.slice(0,200)}`, streamError);
         if (_chatStreamId === myStreamId) {
           event.sender.send("gemini-stream-error", streamError.message || "Unknown streaming error");
         }

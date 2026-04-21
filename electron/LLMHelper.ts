@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai"
+import { elk } from './utils/elkLogger'
 import Groq from "groq-sdk"
 import OpenAI from "openai"
 import Anthropic from "@anthropic-ai/sdk"
@@ -465,8 +466,12 @@ export class LLMHelper {
         const isRetryable = msg.includes("503") || msg.includes("overloaded")
           || status === 529 || status === 429 || status === 500
           || msg.includes("rate_limit") || msg.includes("rate limit");
-        if (!isRetryable) throw e;
+        if (!isRetryable) {
+          elk.error('LLMHelper', `Non-retryable error: ${msg.slice(0, 200)}`, e, { status, retries });
+          throw e;
+        }
 
+        elk.warn('LLMHelper', `Retryable error (${status || msg.slice(0, 40)}), retry ${i+1}/${retries}`, { delay });
         console.warn(`[LLMHelper] Transient error (${status || msg.slice(0, 40)}). Retrying in ${delay}ms...`);
         await new Promise(r => setTimeout(r, delay));
         delay *= 2;
