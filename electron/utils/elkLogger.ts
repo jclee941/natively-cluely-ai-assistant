@@ -7,7 +7,7 @@
 import axios from 'axios';
 import os from 'os';
 
-const ELK_URL = 'http://192.168.50.109:9200';
+const ELK_URL = 'http://192.168.50.105:9200';
 const ERROR_INDEX = 'natively-errors';
 const EVENT_INDEX = 'natively-events';
 const ENABLED = true; // kill switch
