@@ -521,18 +521,12 @@ RULES:
     // OpenAI: [{ role, content }]
     const messages: any[] = [];
 
-    // Inject customNotes as system
+    // Inject PROXY_SYSTEM_PREFIX (colloquial Korean interview rules) + customNotes
     const notes = this.customNotes?.trim() || '';
-    if (notes) {
-      messages.push({
-        role: 'system',
-        content: `<user_context>\n${notes}\n</user_context>\n\n한국어 습니다체. 기본 2문장(10초). 기술심화만 3-4문장(30초).
-쉬운 말로. 이력서에 없는 경험 만들어내지 마라. 슬로건 반복 금지. 추상어 금지.
-핵심만 말하고 멈춰라. AI임을 밝히지 않음.
-절대 금지: 이력서에 없는 구체적 경험을 만들어내는 것. 안 해봤으면 "직접 전담은 아직 약하지만" 이라고 솔직히 말해라.
-핵심만 말하고 멈춰라. 면접관이 더 물으면 그때 확장.`
-      });
-    }
+    const systemContent = notes
+      ? `${LLMHelper.PROXY_SYSTEM_PREFIX}\n<user_context>\n${notes}\n</user_context>`
+      : LLMHelper.PROXY_SYSTEM_PREFIX.trim();
+    messages.push({ role: 'system', content: systemContent });
 
     // Flatten Gemini contents into a single user message
     const userText = contents.map((c: any) => {
