@@ -593,15 +593,9 @@ export class KnowledgeOrchestrator {
     const contextBlock = this.buildContextBlock();
     const systemPromptInjection = 'You are an interview assistant. Prefer concise responses grounded in the candidate context and role requirements.';
 
-    if (this.isIntroQuestion(message)) {
-      const introResponse = this.buildIntroResponse();
-      return {
-        isIntroQuestion: true,
-        introResponse,
-        systemPromptInjection,
-        contextBlock,
-      };
-    }
+    // Intro question: let LLM generate using full resume context
+    // (do NOT short-circuit with buildIntroResponse which is English-only template)
+    // The systemPromptInjection + contextBlock below will guide the LLM.
 
     if (this.looksLikeNegotiationQuestion(message) && this.negotiationScript) {
       const state = this.negotiationTracker.getState();
@@ -1635,17 +1629,26 @@ export class KnowledgeOrchestrator {
     const jd: ActiveJD | null = this.profileData?.activeJD || null;
     const skills = Array.isArray(this.profileData?.skills) ? this.profileData.skills.slice(0, 12).join(', ') : '';
 
-    const blocks = [
-      summary.name ? `Candidate: ${summary.name}` : null,
-      summary.role ? `Primary Role: ${summary.role}` : null,
-      summary.totalExperienceYears ? `Experience: ${summary.totalExperienceYears}+ years` : null,
-      skills ? `Skills: ${skills}` : null,
-      jd ? `Target Role: ${jd.title} at ${jd.company}` : null,
-      jd?.technologies?.length ? `JD Stack: ${jd.technologies.slice(0, 8).join(', ')}` : null,
-      jd?.requirements?.length ? `JD Requirements: ${jd.requirements.slice(0, 5).join(' | ')}` : null,
-    ].filter(Boolean);
+    const blocks: string[] = [];
+    // Inject FULL resume text so LLM can reference specific experiences
+    if (this.resumeText) {
+      blocks.push(`<resume>\n${this.resumeText.slice(0, 6000)}\n</resume>`);
+    }
+    if (this.jdText) {
+      blocks.push(`<job_description>\n${this.jdText.slice(0, 3000)}\n</job_description>`);
+    }
+    // Compact summary for quick reference
+    const meta: string[] = [];
+    if (summary.name) meta.push(`Candidate: ${summary.name}`);
+    if (summary.role) meta.push(`Primary Role: ${summary.role}`);
+    if (summary.totalExperienceYears) meta.push(`Experience: ${summary.totalExperienceYears}+ years`);
+    if (skills) meta.push(`Skills: ${skills}`);
+    if (jd) meta.push(`Target Role: ${jd.title} at ${jd.company}`);
+    if (jd?.technologies?.length) meta.push(`JD Stack: ${jd.technologies.slice(0, 8).join(', ')}`);
+    if (jd?.requirements?.length) meta.push(`JD Requirements: ${jd.requirements.slice(0, 5).join(' | ')}`);
+    if (meta.length) blocks.push(meta.join('\n'));
 
-    return blocks.join('\n');
+    return blocks.join('\n\n');
   }
 
   private buildIntroResponse(): string {
@@ -1674,7 +1677,11 @@ export class KnowledgeOrchestrator {
 
   private isIntroQuestion(message: string): boolean {
     const lower = String(message || '').toLowerCase();
-    return /tell me about yourself|introduce yourself|walk me through your resume|background|about your experience/.test(lower);
+    // English patterns
+    if (/tell me about yourself|introduce yourself|walk me through your resume|background|about your experience/.test(lower)) return true;
+    // Korean patterns
+    if (/자기\s*소개|간단히\s*소개|이력|어떤\s*일을\s*해|상의\s*소개|본인을\s*소개|본인\s*소개/.test(message)) return true;
+    return false;
   }
 
   private estimateCompetitors(companyName: string): string[] {
