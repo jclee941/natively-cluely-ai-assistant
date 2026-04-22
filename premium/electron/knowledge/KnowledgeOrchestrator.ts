@@ -1117,7 +1117,7 @@ export class KnowledgeOrchestrator {
     const pdfTokenHits = (sample.match(/\b(obj|endobj|stream|endstream|xref|trailer|startxref)\b/gi) || []).length;
     if (pdfTokenHits >= 4) return true;
 
-    const nonPrintableChars = sample.replace(/[\x20-\x7E\n\r\t]/g, '').length;
+    const nonPrintableChars = sample.replace(/[\x20-\x7E\n\r\t\u00A0-\uFFFF]/g, '').length;
     const nonPrintableRatio = sample.length > 0 ? nonPrintableChars / sample.length : 0;
     return nonPrintableRatio > 0.28;
   }
@@ -1128,8 +1128,8 @@ export class KnowledgeOrchestrator {
     if (this.looksLikeBinaryOrPdfPayload(normalized)) return false;
 
     const sample = normalized.slice(0, 10_000);
-    const alphaChars = (sample.match(/[A-Za-z]/g) || []).length;
-    const alphaTokens = sample.split(/\s+/).filter((token) => /[A-Za-z]/.test(token)).length;
+    const alphaChars = (sample.match(/[A-Za-z\uAC00-\uD7AF]/g) || []).length;
+    const alphaTokens = sample.split(/\s+/).filter((token) => /[A-Za-z\uAC00-\uD7AF]/.test(token)).length;
     return alphaChars >= 40 && alphaTokens >= 8;
   }
 
