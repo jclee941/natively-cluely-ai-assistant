@@ -185,6 +185,18 @@ const ROLE_PATTERNS = [
   /product\s+manager/i,
   /data\s+scientist/i,
   /developer/i,
+  /보안\s*엔지니어/,
+  /인프라\s*엔지니어/,
+  /시스템\s*엔지니어/,
+  /네트워크\s*엔지니어/,
+  /데브옵스\s*엔지니어/,
+  /백엔드\s*(개발자|엔지니어)/,
+  /프론트\s*엔드\s*(개발자|엔지니어)/,
+  /풀스택\s*(개발자|엔지니어)/,
+  /정보보안\s*(운영\s*)?엔지니어/,
+  /Security\s+Engineer/i,
+  /Platform\s+Engineer/i,
+  /Network\s+Engineer/i,
 ];
 
 class NegotiationConversationTracker {
@@ -1525,6 +1537,15 @@ export class KnowledgeOrchestrator {
     const atPattern = text.match(/\b(?:at|join)\s+([A-Z][A-Za-z0-9& .\-]{2,60})\b/);
     if (atPattern?.[1]) return atPattern[1].trim();
 
+    // Korean patterns: '회사: XXX' or '회사 소개' then extract line
+    const koColon = text.match(/(?:회사|기업)\s*[:\-]\s*([\uAC00-\uD7AF\w()]{2,40})/);
+    if (koColon?.[1]) return koColon[1].trim();
+    // Header pattern: '[JD] 힐링페이퍼(강남언니) — ...'
+    const koHeader = text.match(/\[JD\]\s*([\uAC00-\uD7AF\w]+(?:\([\uAC00-\uD7AF\w]+\))?)/);
+    if (koHeader?.[1]) return koHeader[1].trim();
+    // Match Korean company at line start followed by '—' or '-'
+    const koDash = text.match(/^([\uAC00-\uD7AF\w]+(?:\([\uAC00-\uD7AF\w]+\))?)\s*[—\-]\s*/m);
+    if (koDash?.[1]) return koDash[1].trim();
     return undefined;
   }
 
