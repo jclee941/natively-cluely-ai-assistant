@@ -6,14 +6,16 @@ export const STANDARD_CLOUD_MODELS: Record<string, {
     pmKey: 'geminiPreferredModel' | 'openaiPreferredModel' | 'claudePreferredModel' | 'groqPreferredModel';
 }> = {
     gemini: {
-        hasKeyCheck: (creds) => !!creds?.hasGeminiKey,
+        // HARDCODED: always show Gemini (proxy provides it)
+        hasKeyCheck: () => true,
         ids: ['gemini-3.1-flash-lite', 'gemini-3.1-pro-low'],
         names: ['Gemini 3.1 Flash', 'Gemini 3.1 Pro'],
         descs: ['Fastest • Multimodal', 'Reasoning • High Quality'],
         pmKey: 'geminiPreferredModel'
     },
     openai: {
-        hasKeyCheck: (creds) => !!creds?.hasOpenaiKey,
+        // HARDCODED: always show OpenAI (proxy provides it)
+        hasKeyCheck: () => true,
         ids: ['gpt-5.4'],
         names: ['GPT 5.4'],
         descs: ['OpenAI'],
@@ -28,7 +30,8 @@ export const STANDARD_CLOUD_MODELS: Record<string, {
         pmKey: 'claudePreferredModel'
     },
     groq: {
-        hasKeyCheck: (creds) => !!creds?.hasGroqKey,
+        // HARDCODED: always show Groq (proxy provides it)
+        hasKeyCheck: () => true,
         ids: ['llama-3.3-70b-versatile'],
         names: ['Groq Llama 3.3'],
         descs: ['Ultra Fast'],
