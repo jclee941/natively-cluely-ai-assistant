@@ -1249,8 +1249,24 @@ export class KnowledgeOrchestrator {
   };
 
   private extractRole(text: string): string | undefined {
+    // Skip cert/license/education sections where role-like names appear as cert names
+    const lines = text.split('\n');
+    const filteredLines: string[] = [];
+    let inSkipSection = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (/^\[?\s*(자격증|자격|학력|교육|교육\s*\/\s*이수|certifications?|licenses?|education)\s*\]?\s*$/i.test(trimmed)) {
+        inSkipSection = true;
+        continue;
+      }
+      if (inSkipSection && /^\[.+\]\s*$/.test(trimmed)) {
+        inSkipSection = false;
+      }
+      if (!inSkipSection) filteredLines.push(line);
+    }
+    const filteredText = filteredLines.join('\n');
     for (const pattern of ROLE_PATTERNS) {
-      const m = text.match(pattern);
+      const m = filteredText.match(pattern);
       if (m?.[0]) return m[0].replace(/\s+/g, ' ').trim();
     }
     return undefined;
